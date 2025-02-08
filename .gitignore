@@ -1,0 +1,23 @@
+# Ignore build and runtime files
+bin/
+obj/
+*.dll
+*.exe
+*.pdb
+
+# Ignore user-specific files
+.vscode/
+.idea/
+*.user
+*.suo
+*.csproj.user
+
+# Ignore logs and generated files
+*.log
+*.tmp
+*.cache
+
+# Ignore package dependencies
+packages/
+node_modules/
+.env
