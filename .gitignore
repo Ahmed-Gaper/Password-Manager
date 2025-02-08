@@ -11,7 +11,7 @@ obj/
 *.user
 *.suo
 *.csproj.user
-
+Material of Password manager/
 # Ignore logs and generated files
 *.log
 *.tmp
