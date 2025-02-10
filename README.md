@@ -23,7 +23,7 @@ A secure console-based password management solution that stores and encrypts you
 │   ├── InputValidator.cs           - Input validation
 └── Program.cs          # Entry point
 ```
-## UML Activity Diagram
+## [UML Activity Diagram](https://lucid.app/lucidchart/3bb6d3b4-ce77-4b12-9143-0361bd801a14/edit?viewport_loc=285%2C990%2C1201%2C501%2C0_0&invitationId=inv_86453fbd-9a38-4aa1-8292-8f35504f0705)
 ![UML-Activity-diagram](Photos/UML-Activity-diagram.png)
 ## Features 
 - User Authentication with `SHA-1 Hashing` 
