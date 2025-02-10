@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 using Password_Manager.Core;
+using Password_Manager.Models;
 
 namespace Password_Manager.UI
 {
@@ -60,7 +62,7 @@ namespace Password_Manager.UI
                     default:
 
                     Console.ForegroundColor=ConsoleColor.Red;
-                    Console.WriteLine("WRONG CHOICE !  Enter valid number (1,2 or 3)");
+                    Console.WriteLine("WRONG CHOICE !  Enter valid number");
                     Console.ResetColor();
                     wrongChoice=true;
 
@@ -103,12 +105,12 @@ namespace Password_Manager.UI
         public void SignUp()
         {
             Console.Clear();
-            PrintCenteredBanner("SinUp");
             string masterEmail,masterPassword,masterPasswordConfirmation;
 
             bool vaildInput=false;
             do
             {
+            ConsoleHelper.PrintCenteredBanner("SinUp");
 
             Console.Write("Enter you master Email : ");
             Console.ForegroundColor = ConsoleColor.DarkGray;
@@ -130,10 +132,22 @@ namespace Password_Manager.UI
             masterPasswordConfirmation = Console.ReadLine();
 
             Console.WriteLine();    
-                if(_inputValidator.ValidateMasterEmail(masterEmail) && _inputValidator.ValidateMaterPassword(masterPassword,masterPasswordConfirmation))
+                if(_inputValidator.ValidateMasterEmail(masterEmail) && _inputValidator.ValidateStoredPassword(masterPassword,masterPasswordConfirmation))
                 {  
                  vaildInput=true;
                 }
+                else
+                {
+                    ConsoleHelper.PrintErrorMessage("Wrong email format");
+                    if(ConsoleHelper.TakeValidChoice("Try again","Back to startup menu")==2)
+                    {
+                        StartTheProgram();
+                        return;
+                    }
+
+
+                }
+
             }while(!vaildInput);
 
             bool successfulSignUp=_passwordManager.SignUp(masterEmail,masterPassword);
@@ -148,9 +162,8 @@ namespace Password_Manager.UI
             else
             {
                 Console.ForegroundColor=ConsoleColor.Red;
-                Console.Write("You alredy have an account.........!");
+                Console.WriteLine("You alredy have an account.........!");
                 Console.ResetColor();
-                //Will update it to allow to add new account (multi users)
             }
                 Console.WriteLine("Press any key to LogIn.....!");
                 Console.ReadLine();
@@ -166,7 +179,7 @@ namespace Password_Manager.UI
             {
              attempts++;
             Console.Clear();
-            PrintCenteredBanner("LogIn");
+            ConsoleHelper.PrintCenteredBanner("LogIn");
 
             string _email,_password;
 
@@ -233,7 +246,7 @@ namespace Password_Manager.UI
             }
 
             }
-//you can upgrade it to lock the account
+           //you can upgrade it to lock the account
             Console.ForegroundColor=ConsoleColor.Red;
             Console.WriteLine($"\nMaximum login attempts reached. Please try again later.");
             Console.ResetColor();
@@ -246,7 +259,7 @@ namespace Password_Manager.UI
         public void ShowMainMenu()
         {
             Console.Clear();
-            PrintCenteredBanner("Main Menu");
+            ConsoleHelper.PrintCenteredBanner("Main Menu");
             bool runnig=true,wrongChoice=false;
             string choice;
 
@@ -313,10 +326,42 @@ namespace Password_Manager.UI
         }
 
         //To do
-        public void GeneratePassword()
+   
+    public  void GeneratePassword()
+    {
+           const string Lowercase = "abcdefghijklmnopqrstuvwxyz";
+           const string Uppercase = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+           const string Digits = "0123456789";
+           const string SpecialChars = "!@#$%^&*()-_=+<>?";
+           int length;
+            Console.ForegroundColor=ConsoleColor.Green;
+            Console.Write("Enter the required length : ");
+            length=int.Parse(Console.ReadLine());
+            Console.ResetColor();
+
+        string allChars = Lowercase + Uppercase + Digits + SpecialChars;
+        char[] password = new char[length];
+
+        using (RandomNumberGenerator rng = RandomNumberGenerator.Create())
         {
-     
+            byte[] randomBytes = new byte[length];
+
+            rng.GetBytes(randomBytes);
+
+            for (int i = 0; i < length; i++)
+            {
+                int index = randomBytes[i] % allChars.Length; 
+                password[i] = allChars[index];
+            }
         }
+            Console.ForegroundColor=ConsoleColor.Green;
+            Console.WriteLine(new string (password));
+            Console.ResetColor();
+            Console.WriteLine("Press any key to show Main menu.....!");
+            Console.ReadLine();
+            ShowMainMenu();
+
+    }
         public void AddNewPassword()
         {
 
@@ -327,7 +372,7 @@ namespace Password_Manager.UI
 
             do
             {
-            PrintSidebarTitle("Add New Password ");
+            ConsoleHelper.PrintSidebarTitle("Add New Password ");
             Console.Write("Site name : ");
             siteName=Console.ReadLine();
 
@@ -348,48 +393,43 @@ namespace Password_Manager.UI
                 }
                 else
                 {
-                   bool wrongChoice=false; 
-                   bool running=true;
-
-                   while(running)
-                   {
-                       
-                        if(!wrongChoice)
-                        {
- 
-                        Console.WriteLine("\nWhat would you like to do?");
-                        Console.WriteLine("[1] Retry Add Password");
-                        Console.WriteLine("[2] Go Back to Main menu");
-                
-                        }
-                        string choice = Console.ReadLine();
-                        Console.WriteLine();
-                
-                        switch (choice)
-                        {
-                            case "1":
-                                    running=false;
-                                break;
-                            case "2":
-                                ShowMainMenu();
-                                return; 
-                            default:
-                                Console.WriteLine("Invalid choice. Please try again.");
-                                    wrongChoice=true;
-                                break;
-
-                        }
-                   }
-
+                    ConsoleHelper.PrintErrorMessage("Passwords do not match. Please try again ");
+                  if(ConsoleHelper.TakeValidChoice("Retry Add Password","Go Back to Main menu")==2)
+                  {
+                    ShowMainMenu();
+                    return;
+                  }
                 }
 
             } while (!vaildInput);
 
+             
+            if(_passwordManager.SiteExist(siteName))
+            {
+               Console.ForegroundColor=ConsoleColor.Red;
+               Console.WriteLine("Site is already exist");
+               Console.ResetColor();
+
+                if(ConsoleHelper.TakeValidChoice("Update Site","Go Back to Main menu")==1)
+                {
+                    UpdatePassword();
+                    return;
+                }
+                else
+                {
+                    ShowMainMenu();
+                    return;
+                }
+
+            }
+            else
+            {
              _passwordManager.AddNewPassword(siteName,email,password);
 
             Console.ForegroundColor=ConsoleColor.Green;
             Console.WriteLine("Added Successfully.........!");
             Console.ResetColor();
+            }
 
             Console.WriteLine();
             Console.WriteLine("Press any key to show Main menu.....!");
@@ -402,10 +442,18 @@ namespace Password_Manager.UI
             bool vaildInput=false;
             string siteName;
 
-            PrintSidebarTitle("Delete Password ");
+            ConsoleHelper.PrintSidebarTitle("Delete Password ");
             Console.Write("Site name : ");
             siteName=Console.ReadLine();
 
+            if(!_passwordManager.SiteExist(siteName))
+            {
+                Console.ForegroundColor=ConsoleColor.Red;
+                Console.WriteLine("Site isn't exist");
+                Console.ResetColor();
+            }
+            else
+            {
 
                 bool wrongChoice=false; 
                 bool running=true;
@@ -441,15 +489,15 @@ namespace Password_Manager.UI
 
                     }
                 }
-                
 
-             _passwordManager.DeletePassword(siteName);
+                _passwordManager.DeletePassword(siteName);
 
-            Console.ForegroundColor=ConsoleColor.Green;
-            Console.WriteLine("Deleted Successfully.........!");
-            Console.ResetColor();
+                Console.ForegroundColor=ConsoleColor.Green;
+                Console.WriteLine("Deleted Successfully.........!");
+                Console.ResetColor();
 
-            Console.WriteLine();
+            }
+
             Console.WriteLine("Press any key to show Main menu.....!");
             Console.ReadLine();
             ShowMainMenu();
@@ -462,7 +510,7 @@ namespace Password_Manager.UI
 
             do
             {
-            PrintSidebarTitle("Update Password ");
+            ConsoleHelper.PrintSidebarTitle("Update Password ");
             Console.Write("Site name : ");
             siteName=Console.ReadLine();
 
@@ -480,49 +528,32 @@ namespace Password_Manager.UI
                 }
                 else
                 {
-                   bool wrongChoice=false; 
-                   bool running=true;
-
-                   while(running)
-                   {
-                       
-                        if(!wrongChoice)
-                        {
- 
-                        Console.WriteLine("\nWhat would you like to do?");
-                        Console.WriteLine("[1] Retry Update Password");
-                        Console.WriteLine("[2] Go Back to Main menu");
-                
-                        }
-                        string choice = Console.ReadLine();
-                        Console.WriteLine();
-                
-                        switch (choice)
-                        {
-                            case "1":
-                                    running=false;
-                                break;
-                            case "2":
-                                ShowMainMenu();
-                                return; 
-                            default:
-                                Console.WriteLine("Invalid choice. Please try again.");
-                                    wrongChoice=true;
-                                break;
-
-                        }
-                   }
-
+                    ConsoleHelper.PrintErrorMessage("Passwords do not match. Please try again");
+                    if(ConsoleHelper.TakeValidChoice("Retry Update Password","Go Back to Main menu")==2)
+                    {
+                        ShowMainMenu();
+                    }
+            
                 }
 
             } while (!vaildInput);
 
-             _passwordManager.UpdatePassword(siteName,newpassword);
+            if(_passwordManager.SiteExist(siteName))
+            {
+              _passwordManager.UpdatePassword(siteName,newpassword);
 
-            Console.ForegroundColor=ConsoleColor.Green;
-            Console.WriteLine("Updated Successfully.........!");
-            Console.ResetColor();
+                Console.ForegroundColor=ConsoleColor.Green;
+                Console.WriteLine("Updated Successfully.........!");
+                Console.ResetColor();
+            }
+            else
+            { 
+                Console.ForegroundColor=ConsoleColor.Red;
+                Console.WriteLine("Site isn't exist");
+                Console.ResetColor();
+   
 
+            }
             Console.WriteLine();
             Console.WriteLine("Press any key to show Main menu.....!");
             Console.ReadLine();
@@ -531,7 +562,25 @@ namespace Password_Manager.UI
 
         public void ShowAllPasswords()
         {
-            _passwordManager.ShowAllPasswords();
+            List<PasswordEntry> passwordList = _passwordManager.ShowAllPasswords();
+
+            if (passwordList.Count == 0)
+            {
+                Console.WriteLine("No passwords stored.");
+            }
+            else
+            {
+                Console.WriteLine("---------------------------------------------------------------");
+                Console.WriteLine("| Site Name        | Email               | Password |");
+                Console.WriteLine("---------------------------------------------------------------");
+
+                foreach (var site in passwordList)
+                {
+                    Console.WriteLine($"| {site.SiteName,-15} | {site.Email,-20} | {site.Password,-18} |");
+                }
+
+    Console.WriteLine("---------------------------------------------------------------");
+            }
             Console.WriteLine();
             Console.WriteLine("Press any key to show Main menu.....!");
             Console.ReadLine();
@@ -546,38 +595,7 @@ namespace Password_Manager.UI
 
 
 
-        #region
-        
-        private void PrintCenteredBanner(string text)
-        {
-            int width = Console.WindowWidth;
-            string border = new string('*', width);
-            int padding = (width - text.Length) / 2;
-
-            Console.ForegroundColor = ConsoleColor.Red;
-            Console.WriteLine(border);
-            Console.WriteLine(new string(' ', padding) + text);
-            Console.WriteLine(border);
-            Console.ResetColor();
-        }
-        private void PrintSidebarTitle(string title)
-        {
-            Console.Clear();
-            Console.ForegroundColor = ConsoleColor.Yellow;
-
-            string border = "┌" + new string('─', title.Length + 2) + "┐";
-            string textLine = $"│ {title} │";
-            string bottomBorder = "└" + new string('─', title.Length + 2) + "┘";
-
-            Console.WriteLine(border);
-            Console.WriteLine(textLine);
-            Console.WriteLine(bottomBorder);
-
-            Console.ResetColor();
-            Console.WriteLine();
-        }
-
-        #endregion
+    
     }
 }
     

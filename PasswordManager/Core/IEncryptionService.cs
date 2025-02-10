@@ -1,13 +1,10 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace Password_Manager.Core
+namespace PasswordManager.Encryption
 {
-    internal interface IEncryptionService
+    public interface IEncryptionService
     {
-        // TODO
+        string Encrypt(string plainText, string key);
+        string Decrypt(string cipherText, string key);
     }
 }

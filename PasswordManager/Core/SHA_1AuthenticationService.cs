@@ -1,4 +1,4 @@
-﻿using Paswword_Manager.Core;
+﻿using Password_Manager.Core;
 using System;
 using System.Collections.Generic;
 
@@ -48,14 +48,13 @@ namespace Password_Manager.Core
             ulong originalLength = (ulong)message.Length * 8; 
 
             List<byte> paddedMessage = new List<byte>(message);
-            paddedMessage.Add(0x80); // Append '1' bit (10000000 in binary)
+            paddedMessage.Add(0x80); 
 
             while ((paddedMessage.Count * 8) % 512 != 448)
             {
                 paddedMessage.Add(0x00); 
             }
 
-            // Append 64-bit message length
             byte[] lengthBytes = UInt64ToByteArray(originalLength);
             paddedMessage.AddRange(lengthBytes);
 
@@ -69,7 +68,6 @@ namespace Password_Manager.Core
             {
                 uint[] words = new uint[80];
 
-                // First 16 words: Convert 4 bytes to uint manually
                 for (int j = 0; j < 16; j++)
                 {
                     words[j] = (uint)(paddedMessage[i + j * 4] << 24 |

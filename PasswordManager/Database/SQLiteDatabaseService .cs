@@ -2,36 +2,104 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Security.Cryptography;
+using System.Text;
+using Password_Manager.Models;
 
 namespace Password_Manager.Database
 {
     public class SQLiteDatabaseService : IDatabaseService
     {
-        private readonly string _connectionString;
+        private string _connectionString;
 
-        public SQLiteDatabaseService(string databasePath)
+        public string ConnectionString
         {
-            _connectionString = $"Data Source={databasePath}";
-            InitializeDatabase();
+            set { string sanitizedEmail = value.Replace("@", "_").Replace(".", "_");
+            string databasePath = $"password_manager_{sanitizedEmail}.db";
+            _connectionString = $"Data Source={databasePath}"; }
         }
-
-        public void InitializeDatabase()
+   
+        public void InitializeDatabase(string userEmail)
         {
+            string sanitizedEmail = userEmail.Replace("@", "_").Replace(".", "_");
+            string databasePath = $"password_manager_{sanitizedEmail}.db";
+            _connectionString = $"Data Source={databasePath}";
+
             using (SqliteConnection connection = new SqliteConnection(_connectionString))
             {
                 connection.Open();
 
-                SqliteCommand createPasswordsTableCommand = connection.CreateCommand();
-                createPasswordsTableCommand.CommandText = @"
+                // Create the Passwords table
+                SqliteCommand createPasswordsTable = connection.CreateCommand();
+                createPasswordsTable.CommandText = @"
                     CREATE TABLE IF NOT EXISTS Passwords (
                         SiteName TEXT PRIMARY KEY,
+                        Email TEXT NOT NULL,
                         EncryptedPassword TEXT NOT NULL
                     )";
-                createPasswordsTableCommand.ExecuteNonQuery();
+                createPasswordsTable.ExecuteNonQuery();
+
+                // Create the UserCredentials table to store the user's master password
+                SqliteCommand createUserTable = connection.CreateCommand();
+                createUserTable.CommandText = @"
+                    CREATE TABLE IF NOT EXISTS UserCredentials (
+                        Email TEXT PRIMARY KEY,
+                        HashedPassword TEXT NOT NULL
+                    )";
+                createUserTable.ExecuteNonQuery();
             }
         }
 
-        public bool AddPassword(string siteName, string encryptedPassword)
+       
+        public bool DoesUserExist(string userEmail)
+        {
+            string sanitizedEmail = userEmail.Replace("@", "_").Replace(".", "_");
+            string databasePath = $"password_manager_{sanitizedEmail}.db";
+            return File.Exists(databasePath);
+        }
+
+
+        public void RegisterUser(string userEmail, string masterHashedPassword)
+        {
+            using (SqliteConnection connection = new SqliteConnection(_connectionString))
+            {
+                connection.Open();
+                SqliteCommand command = connection.CreateCommand();
+                command.CommandText = @"
+                    INSERT OR REPLACE INTO UserCredentials (Email, HashedPassword)
+                    VALUES ($email, $hashedPassword)";
+                command.Parameters.AddWithValue("$email", userEmail);
+                command.Parameters.AddWithValue("$hashedPassword", masterHashedPassword);
+                command.ExecuteNonQuery();
+            }
+        }
+
+  
+        public bool VerifyUserPassword(string userEmail, string enteredHashedPassword)
+        {
+            using (SqliteConnection connection = new SqliteConnection(_connectionString))
+            {
+                connection.Open();
+                SqliteCommand command = connection.CreateCommand();
+                command.CommandText = @"
+                    SELECT HashedPassword 
+                    FROM UserCredentials 
+                    WHERE Email = $email";
+                command.Parameters.AddWithValue("$email", userEmail);
+                Console.WriteLine(_connectionString);
+                object result = command.ExecuteScalar();
+                if (result == null)
+                {
+                    return false;
+                }
+                string storedHashedPassword = result.ToString();
+                return storedHashedPassword == enteredHashedPassword;
+            }
+        }
+
+
+
+        public void AddPassword(string siteName, string email, string encryptedPassword)
         {
             using (SqliteConnection connection = new SqliteConnection(_connectionString))
             {
@@ -39,20 +107,35 @@ namespace Password_Manager.Database
 
                 SqliteCommand command = connection.CreateCommand();
                 command.CommandText = @"
-                    INSERT INTO Passwords (SiteName, EncryptedPassword)
-                    VALUES ($siteName, $encryptedPassword)";
+                    INSERT INTO Passwords (SiteName, Email, EncryptedPassword)
+                    VALUES ($siteName, $email, $encryptedPassword)";
                 command.Parameters.AddWithValue("$siteName", siteName);
+                command.Parameters.AddWithValue("$email", email);
                 command.Parameters.AddWithValue("$encryptedPassword", encryptedPassword);
 
                 try
                 {
                     command.ExecuteNonQuery();
-                    return true;
                 }
-                catch (SqliteException ex) when (ex.SqliteErrorCode == 19) // SQLite constraint violation (e.g., duplicate site name)
+                catch (SqliteException ex) when (ex.SqliteErrorCode == 19)
                 {
-                    return false;
+                    Console.WriteLine("This site already exists in the database.");
                 }
+            }
+        }
+
+        public bool SiteExist(string siteName)
+        {
+            using (SqliteConnection connection = new SqliteConnection(_connectionString))
+            {
+                connection.Open();
+
+                SqliteCommand command = connection.CreateCommand();
+                command.CommandText = "SELECT COUNT(*) FROM Passwords WHERE SiteName = $siteName";
+                command.Parameters.AddWithValue("$siteName", siteName);
+
+                long count = (long)command.ExecuteScalar();
+                return count > 0;
             }
         }
 
@@ -97,7 +180,7 @@ namespace Password_Manager.Database
                 connection.Open();
 
                 SqliteCommand command = connection.CreateCommand();
-                command.CommandText = "SELECT SiteName, EncryptedPassword FROM Passwords";
+                command.CommandText = "SELECT SiteName, Email, EncryptedPassword FROM Passwords";
 
                 using (SqliteDataReader reader = command.ExecuteReader())
                 {
@@ -106,7 +189,8 @@ namespace Password_Manager.Database
                         PasswordEntry entry = new PasswordEntry
                         {
                             SiteName = reader.GetString(0),
-                            EncryptedPassword = reader.GetString(1)
+                            Email = reader.GetString(1),
+                            Password = reader.GetString(2)
                         };
                         passwords.Add(entry);
                     }
@@ -116,16 +200,7 @@ namespace Password_Manager.Database
             return passwords;
         }
 
-        public void BackupDatabase(string backupPath)
-        {
-            string sourcePath = _connectionString.Replace("Data Source=", "");
-            File.Copy(sourcePath, backupPath, overwrite: true);
-        }
 
-        public void RestoreDatabase(string backupPath)
-        {
-            string destinationPath = _connectionString.Replace("Data Source=", "");
-            File.Copy(backupPath, destinationPath, overwrite: true);
-        }
+    
     }
 }

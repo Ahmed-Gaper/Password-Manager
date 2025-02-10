@@ -1,23 +1,21 @@
-﻿using System.Collections.Generic;
+﻿using Password_Manager.Models;
+using System.Collections.Generic;
 
 namespace Password_Manager.Database
 {
     public interface IDatabaseService
     {
-        void InitializeDatabase();
+       string ConnectionString { set; }
 
-        bool AddPassword(string siteName, string encryptedPassword);
+        void InitializeDatabase (string userEmail);  
+        void RegisterUser(string userEmail, string masterHashedPassword);
+        void AddPassword(string siteName, string email, string encryptedPassword);
+        bool VerifyUserPassword(string userEmail, string enteredHashedPassword) ;
+        bool SiteExist(string siteName);
+        bool DoesUserExist(string masterEmail);
         bool UpdatePassword(string siteName, string newEncryptedPassword);
         bool DeletePassword(string siteName);
         List<PasswordEntry> GetAllPasswords();
-
-        void BackupDatabase(string backupPath);
-        void RestoreDatabase(string backupPath);
-    }
-
-    public class PasswordEntry
-    {
-        public string SiteName { get; set; }
-        public string EncryptedPassword { get; set; }
+  
     }
 }

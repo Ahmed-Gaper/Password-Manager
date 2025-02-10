@@ -9,7 +9,6 @@ namespace Password_Manager.UI
     public interface IInputValidator
     {
         bool ValidateMasterEmail(string masterEmail);
-        bool ValidateMaterPassword(string masterPassword,string confirmationPassword);
         bool ValidateStoredPassword(string masterPassword,string confirmationPassword);
     }
 }

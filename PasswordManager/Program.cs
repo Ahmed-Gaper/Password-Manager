@@ -1,8 +1,7 @@
 ﻿using Password_Manager.UI;
 using Password_Manager.Core;
 using Password_Manager.Database;
-using Password_Manager.Utils;
-using Paswword_Manager.Core;
+using PasswordManager.Encryption;
 
 namespace Password_Manager
 {
@@ -10,10 +9,10 @@ namespace Password_Manager
     {
         static void Main(string[] args)
         {
-            //IEncryptionService encryptionService = new AesEncryptionService();
-            IDatabaseService databaseService = new SQLiteDatabaseService("password_manager.db");
+            IEncryptionService encryptionService = new XorEncryptionService();
+            IDatabaseService databaseService = new SQLiteDatabaseService();
             IAuthenticationService authenticationService=new SHA_1AuthenticationService();
-            IPasswordManager passwordManager = new PasswordManager(databaseService, authenticationService);
+            IPasswordManager passwordManager = new PasswordManagerService(databaseService, authenticationService,encryptionService);
 
             IInputValidator inputValidator = new InputValidator();
             IUserInterface consoleUI = new ConsoleUI(passwordManager, inputValidator);

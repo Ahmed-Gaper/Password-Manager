@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Paswword_Manager.Core
+namespace Password_Manager.Core
 {
     public interface IAuthenticationService
     {
