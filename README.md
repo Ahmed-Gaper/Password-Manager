@@ -1,5 +1,5 @@
 # Password-Manager
-A secure console-based password management solution that stores and encrypts your credentials using robust cryptographic algorithms.
+A secure console-based password management solution—initially console-only, with planned UI and advanced feature improvements—that stores and encrypts your passwords using robust cryptographic algorithms.
 ## Project Structure
 ```plaintext
 📦 PasswordManager
