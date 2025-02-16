@@ -52,9 +52,35 @@ A secure console-based password management solution—initially console-only, wi
   
 
 ## Installation 
-
+### Prerequisites
+- .NET 6.0 SDK or later
+- GIT
+### Steps
+1. Clone the repository
 ```powershell 
 git clone https://github.com/yourusername/PasswordManager.git
 cd PasswordManager
+```
+2. Restore dependencies:
+```powershell
+Restore dependencies:
+```
+3. Run the application:
+```powershell
 dotnet run
 ```
+
+
+## Contributing
+We welcome contributions! Please follow these guidelines:
+
+1. Fork the repository
+2. Create a feature branch:
+```powershell
+git checkout -b feature/your-feature-name
+```
+3. Implement your changes following existing patterns:
+- Use interface-driven design
+- Maintain separation between Core/UI/Database layers
+4. Test thoroughly
+5. Submit a Pull Request with description of changes
