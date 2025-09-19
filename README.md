@@ -84,3 +84,4 @@ git checkout -b feature/your-feature-name
 - Maintain separation between Core/UI/Database layers
 4. Test thoroughly
 5. Submit a Pull Request with description of changes
+-----------------------------------------------------
